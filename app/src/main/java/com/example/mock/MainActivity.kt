@@ -3,13 +3,15 @@ package com.example.mock
 import android.os.Bundle
 import android.os.StrictMode
 import androidx.appcompat.app.AppCompatActivity
+import com.example.mock.models.Characters
+import com.google.gson.Gson
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.BufferedReader
 import java.io.IOException
-import java.io.InputStream
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
+
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -29,9 +31,9 @@ class MainActivity : AppCompatActivity() {
         button.setOnClickListener { hello_world.text = callAPI() }
     }
 
-    private fun callAPI(): String {
+    private fun callAPI(): String? {
         var reader: BufferedReader? = null
-        var response = ""
+        var witcherChars: Characters?
 
         try {
             val myUrl = URL(BuildConfig.SERVER_URL)
@@ -39,9 +41,25 @@ class MainActivity : AppCompatActivity() {
             conn.requestMethod = "GET"
             conn.setRequestProperty("Content-Type", "application/json")
             conn.connect()
-            val inputStream: InputStream = conn.getInputStream()
-            reader = BufferedReader(InputStreamReader(inputStream))
-            response = reader.readLine()
+
+            val input = BufferedReader(
+                InputStreamReader(
+                    conn.inputStream
+                )
+            )
+
+            var totalLine = ""
+            var inputLine: String?
+            while (input.readLine().also { inputLine = it } != null) {
+                println(inputLine)
+                totalLine += inputLine
+            }
+            input.close()
+
+            var gson = Gson()
+            witcherChars = gson?.fromJson(totalLine, Characters::class.java)
+            return witcherChars.characterCollection.collection.first().name
+
         } catch (e: IOException) {
             e.printStackTrace()
         } finally {
@@ -54,6 +72,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        return response
+        return null
     }
 }
